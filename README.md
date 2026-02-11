@@ -29,3 +29,6 @@
 # If we ever pass an array in response of a request, then pydantic will automatically converts it in json so that it is properly structured
 
 # By default FastAPI provides documentation on "/docs" and on "/redoc".
+
+# Now that we have moved out main.py file in the app directory we have to remember that the previous command to run the uvicorn server do not work. The new command would be -
+# uvicorn app.main:app --reload    -> Here the app.main tells FastAPI to look under a pacakge(folder in python) named app to find main file(app folder is a package because it has __init__.py file which is necessary to tell python that this folder is a package).
