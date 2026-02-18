@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from pydantic.types import conint
 from datetime import datetime
 from typing import Optional
 
@@ -42,6 +43,15 @@ class Post(PostBase):    # This is the response model where we can define the fi
     class Config:         # This is the configuration class where we can define the configuration for the pydantic model. Here we are setting orm_mode to True which means that we can use the pydantic model with the ORM models and it will automatically convert the ORM models to pydantic models.
         orm_mode = True
 
+
+class PostOut(BaseModel):
+    Post: Post
+    votes: int
+    
+    class Config:
+        orm_mode = True
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -56,3 +66,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[int] = None
+
+class Vote(BaseModel):
+    post_id: int
+    dir: conint(le=1)
