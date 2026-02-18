@@ -61,3 +61,61 @@ We generally use a file named as .env which stores all of our configurations so 
 In this tutorial we have seen how much powerful a tool such as SQL Alchemy can se but still it has a major limitation like we can not update a table if it already exists in the database, and also we can not track the changes like with do with git.
 
 For that purpose we will be using another tool name as alembic.
+
+Using alembic can be a bit complex so here are the steps:
+1. pip install alembic
+2. alembic --help
+3. alembic init <the name of the directory where to install alembic> (Ex. alembic init alembic)
+4. Then we have to import the "Base" in the env.py file under alembic folder from our models file(app.models) and then set the "target_metadata" to "Base.metadata"
+5. Then in alembic.ini remove the sqlalchemy.url it is okay to leave it blank, and then import settings from app.config and do this:
+config.set_main_option("sqlalchemy.url", f"postgresql+psycopg2://{settings.database_username}:{settings.database_password}@{settings.database_hostname}:{settings.database_port}/{settings.database_name}")
+This will overwrite the sqlalchemy.url command in the alembic.ini
+6. Then do:
+alembic revision -m "revision message(kind of like commit message in git)"
+This command will create a new checkpoint type py file under revision folder in alembic directory which is basically our version
+7. Then when we open the revision file we can see the revision id and also there are 2 very important functions:
+    (i). upgrade() -> This will help in creating the tables. So we write all of the table making logic under it manually.
+    (ii). downgrade() -> Whenever we want to remove a table then we will use downgrade.
+8. Then we have to do:
+alembic upgrade <version_id>
+This will create all the tables in the database along with an alembic version table which will simply store the version, so do not delete it.
+Now when we want to add something we have to make new version. In a new version we will also get something as down_revision so that we can get down to that version
+
+"alembic current" -> shows the current version.
+
+"alembic heads" -> shows the latest version that we are at
+
+After getting the head from the above command instead of doing:
+"alembic upgrade <version_id>" we can do "alembic upgrade head" or we can do "alembic"
+
+Then when you want to downgrade do this:
+alembic downgrade <downgrade_version_id>   or,
+alembic downgrade -1    (it can -n where n is the previous version where you want to go)
+
+To get history do this:
+alembic history
+
+Now instead of writing all those heavy commands to create the tables and columns we can directly make tables with all constraints because we have already imported base from models, the command to autogenerate the table is as follows:
+alembic revision --autogenerate -m "revision name"
+
+This will create a revision which would have the code to make the tables and columns.
+
+CORS(Cross Origin Resource Sharing) is a policy which simply tell that you can not generally access your api from the web browsers that are on different domain such as 'ww.google.com'.
+That is why we set CORS policy in the main.py file by importing it like this: 'from fastapi.middleware.cors import CORSMiddleware'
+Then we have set the 'add_middleware' like this:
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+Here we can allow the specific methods, origins, and headers as well. CORSMiddleware is something that runs before every request.
+The origin can be set as:
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+]
+or, origins = ["*"]
