@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from .. import models, schemas, oauth2    # here .. means that we are going back to the parent directory and then importing the models, schemas and utils files from there.
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from ..database import get_db
 from typing import List, Optional
 
@@ -9,10 +10,13 @@ router = APIRouter(
     tags=['Posts']
 )
 
-@router.get("/", response_model=List[schemas.Post])   # Here we are setting the response model to a list of Post because we are returning a list of posts in the response and we want to validate the response using the pydantic model. So we have to set the response model to a list of Post.
+@router.get("/", response_model=List[schemas.PostOut])   # Here we are setting the response model to a list of Post because we are returning a list of posts in the response and we want to validate the response using the pydantic model. So we have to set the response model to a list of Post.
 async def get_post(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search: Optional[str] = ""):
     # posts = db.query(models.Post).filter(models.Post.owner_id == current_user.id).all()
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    # posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
+    
+    posts = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()   # By default the join in SQL Alchemy is an inner join while in SQL it is outer so we want outer as well
+    # print(posts)
     
     return posts   # If we ever pass an array in response of a request, then pydantic will automatically converts it in json so that it is properly structured
 
@@ -35,7 +39,7 @@ async def create_posts(post: schemas.PostCreate, db: Session = Depends(get_db), 
     return new_post
 
 
-@router.get("/{id}", response_model=schemas.Post)
+@router.get("/{id}", response_model=schemas.PostOut)
 async def get_post(id: int, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):  # Here if we do not set id to int we will get an error because we are comparing the id with the id in the list which is of type int and if we do not set it to int then it will be of type str and we will get an error because we cannot compare str with int.
     # for post in my_posts:
     #     if post['id'] == id:
@@ -47,7 +51,7 @@ async def get_post(id: int, db: Session = Depends(get_db), current_user: int = D
 
     # # response.status_code = status.HTTP_404_NOT_FOUND
     # # return {"message": f"Post with id {id} not found!"}
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+    post = db.query(models.Post, func.count(models.Vote.post_id).label("votes")).join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True).group_by(models.Post.id).filter(models.Post.id == id).first()
     # print(post.__str__())
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with id {id} not found!")   # This is the better way to handle the error as it is more readable and we can also pass the detail of the error in the response.

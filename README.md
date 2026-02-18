@@ -56,3 +56,8 @@ router = APIRouter(
     prefix="/posts"   # Here we are setting the prefix for all the routes in this router to /posts so that we do not have to write /posts in every route and it will be automatically added to the route. For example, if we have a route / then it will become /posts/ and if we have a route /{id} then it will become /posts/{id} and so on.
 )
 
+We generally use a file named as .env which stores all of our configurations so that we do not have to hardcode them in the code.
+
+In this tutorial we have seen how much powerful a tool such as SQL Alchemy can se but still it has a major limitation like we can not update a table if it already exists in the database, and also we can not track the changes like with do with git.
+
+For that purpose we will be using another tool name as alembic.
